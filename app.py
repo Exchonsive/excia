@@ -201,7 +201,7 @@ if prompt := st.chat_input("Tulis curhatan atau pertanyaanmu di sini..."):
 
     with st.chat_message("assistant"):
         with st.spinner("EXCIA sedang menyiapkan nasihat dan rujukan terbaik..."):
-            hasil = excia.proses_curhatan(prompt)
+            hasil = excia.proses_curhatan(prompt, chat_history=st.session_state.messages)
             
             teks_lengkap_raw = hasil['raw_quran'].get('teks_lengkap', '') if hasil['raw_quran'] else ''
             teks_terjemah_terpisah = hasil['raw_quran'].get('teks_terjemah', None) if hasil['raw_quran'] else None

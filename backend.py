@@ -49,7 +49,7 @@ class ExciaOrchestrator:
         # Tarik Ayat Al-Qur'an (Universal)
         hasil_quran = self.index.query(
             vector=teks_vektor, 
-            top_k=20, 
+            top_k=4, 
             include_metadata=True,
             filter={"tipe_dokumen": {"$eq": "quran"}}
         )
@@ -67,7 +67,7 @@ class ExciaOrchestrator:
         # Tarik Ayat Al-Qur'an menggunakan vektor murni
         hasil_quran = self.index.query(
             vector=vektor_quran, 
-            top_k=20, 
+            top_k=4, 
             include_metadata=True,
             filter={"tipe_dokumen": {"$eq": "quran"}}
         )
@@ -81,11 +81,16 @@ class ExciaOrchestrator:
         )
         return hasil_quran, hasil_artikel
 
-    def proses_curhatan(self, input_user):
+    def proses_curhatan(self, input_user: str, chat_history: list = None):
         teks_baku = self.normalisasi_teks(input_user)
         intent = self.prediksi_intent(teks_baku)
 
         # --- FIX 1: Query Rewriting ---
+        konteks_history = ""
+        if chat_history:
+            for msg in chat_history[-6:]:  # ambil 6 pesan terakhir saja agar prompt tidak terlalu panjang
+                role = "Pengguna" if msg["role"] == "user" else "EXCIA"
+                konteks_history += f"{role}: {msg['content']}\n"
         # Normalisasi query menjadi bentuk deklaratif sebelum di-embed
         # supaya "ayat apa yang menjelaskan X" dan "ayat tentang X" → vektor sama
         teks_rewrite = self._rewrite_query(teks_baku)
@@ -123,21 +128,24 @@ class ExciaOrchestrator:
         )
 
         prompt_llm = f"""
-        Kamu adalah Asisten Spiritual EXCIA. Pengguna bertanya: "{input_user}".
+        Kamu adalah Asisten Spiritual EXCIA yang sedang bercakap-cakap dengan pengguna.
 
-        Di bawah ini kandidat ayat dari database, diurutkan dari PALING RELEVAN ke kurang relevan.
-        Skor Relevansi mendekati 1.0 = sangat cocok.
+        [RIWAYAT PERCAKAPAN SEBELUMNYA]:
+        {konteks_history if konteks_history else "Ini adalah awal percakapan."}
 
+        [PESAN TERBARU PENGGUNA]: "{input_user}"
+
+        [KANDIDAT AYAT DARI DATABASE]:
         {teks_tafsir_gabungan}
 
-        [Artikel Pendukung]: {teks_artikel}
+        [ARTIKEL PENDUKUNG]: {teks_artikel}
 
         INSTRUKSI MUTLAK:
-        1. PRIORITASKAN kandidat dengan Skor Relevansi tertinggi kecuali ada alasan kuat memilih lain.
-        2. WAJIB sebutkan nama Surah dan angka Ayat persis seperti di list (contoh: "Surah Al-Baqarah Ayat 183").
-        3. Berikan nasihat hangat dan menenangkan.
-        4. DILARANG mengutip ayat di luar list kandidat.
-        5. Langsung berikan nasihat tanpa perkenalan robotik.
+        1. Baca riwayat percakapan untuk memahami konteks emosi dan masalah pengguna secara utuh.
+        2. Berikan nasihat yang NYAMBUNG dengan keseluruhan cerita, bukan hanya pesan terakhir.
+        3. PRIORITASKAN kandidat ayat dengan Skor Relevansi tertinggi.
+        4. WAJIB sebutkan nama Surah dan angka Ayat yang kamu pilih.
+        5. Langsung berikan nasihat hangat tanpa perkenalan robotik agar tidak terlalu panjang response mu namun tetap sopan.
         """
 
         respons_llm = self.llm.generate_content(prompt_llm)
