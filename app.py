@@ -1,64 +1,249 @@
 import streamlit as st
 from backend import ExciaOrchestrator
 
-# 1. Konfigurasi Halaman (Harus di paling atas)
-st.set_page_config(page_title="EXCIA - Asisten Spiritual", page_icon="✨", layout="wide")
+# 1. Konfigurasi Halaman
+st.set_page_config(page_title="EXCIA - Asisten Spiritual", page_icon="🕊️", layout="wide")
 
-# 2. Inisialisasi Mesin Backend (Menggunakan Cache agar tidak perlu load model berulang kali)
+# 2. Injeksi CSS Khusus (Sudah Diperbaiki Kontras & Warnanya)
+st.markdown(
+    """
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap' rel='stylesheet'>
+    <style>
+        html, body, [data-testid="stAppViewContainer"] {
+            background: linear-gradient(135deg, #0f172a 0%, #0a2540 100%) !important;
+            color: #e0f2fe;
+            font-family: 'Inter', Arial, sans-serif;
+        }
+        [data-testid="stHeader"] {display: none;}
+        .block-container {padding-top: 2rem; padding-bottom: 6rem; max-width: 800px;}
+        
+        .main-title {
+            font-size: 2.7rem;
+            font-weight: 900;
+            color: #38bdf8;
+            text-align: center;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.15rem;
+            text-shadow: 0 4px 32px #0ff3, 0 1px 0 #222b;
+        }
+        .main-subtitle {
+            font-size: 1.08rem;
+            color: #a5b4fc;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            font-weight: 400;
+        }
+        
+        /* Modifikasi Chat Bubble */
+        .chat-bubble {
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            margin-bottom: 1.2rem;
+            text-align: left;
+            line-height: 1.6;
+        }
+        .chat-bubble.nasihat {
+            background: rgba(34,211,238,0.12);
+            border-left: 4px solid #38bdf8;
+            color: #ffffff; /* Teks dihitamkan agar kontras */
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(56,189,248,0.1);
+        }
+        .chat-bubble.surah {
+            color: #38bdf8;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+            margin-top: 1rem;
+        }
+        .chat-bubble.ayat {
+            background: rgba(59,130,246,0.08);
+            border: 1px solid rgba(125,211,252,0.3);
+            color: #bae6fd;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-align: right;
+            direction: rtl; 
+            line-height: 2.2;
+            padding: 1.5rem;
+            font-family: 'Amiri', 'Scheherazade New', serif;
+        }
+        .chat-bubble.terjemahan {
+            color: #a5b4fc;
+            font-size: 1.05rem;
+            font-style: italic;
+            margin-top: -0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .chat-bubble.tafsir, .chat-bubble.artikel {
+            background: rgba(59,130,246,0.05);
+            border: 1px solid rgba(165,180,252,0.2);
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+        
+        /* PERBAIKAN 1: Hapus Kotak Putih Mentereng di Bawah */
+        [data-testid="stBottomBlock"] {
+            background: transparent !important;
+            background-color: #0a2540 !important; /* Warna fallback jika transparent gagal */
+        }
+
+        /* PERBAIKAN 2: Desain Input Chat Box */
+        [data-testid="stChatInput"] {
+            background-color: #1e293b !important; /* Warna kotak lebih terang sedikit dari background */
+            border: 1.5px solid #38bdf8 !important;
+            border-radius: 12px !important;
+        }
+        
+        /* PERBAIKAN 3: Warna Teks Ketikan & Placeholder agar Terbaca */
+        [data-testid="stChatInput"] textarea {
+            color: #ffffff !important;
+        }
+        [data-testid="stChatInput"] textarea::placeholder {
+            color: #94a3b8 !important;
+        }
+        [data-testid="stChatInput"] svg {
+            fill: #38bdf8 !important; /* Warna ikon panah kirim */
+        }
+        
+        /* PERBAIKAN 4: Warna pesan user bawaan Streamlit agar tidak hitam */
+        [data-testid="stChatMessageContent"] {
+            color: #e0f2fe !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# 3. Inisialisasi Mesin
 @st.cache_resource
 def siapkan_mesin():
-    # GANTI STRING DI BAWAH DENGAN KREDENSIAL ASLIMU
-    repo_hf = "USERNAME_KAMU/excia-indobert-intent" 
-    kunci_pinecone = "API_KEY_PINECONE_KAMU"
-    kunci_gemini = "API_KEY_GEMINI_KAMU"
+    repo_hf = "Exchonsive/excia-indobert-intent"
+    return ExciaOrchestrator(repo_hf)
+
+try:
+    excia = siapkan_mesin()
+except Exception as exc:
+    st.error("Maaf, mesin EXCIA sedang tidak bisa dijalankan saat ini. Periksa konfigurasi API terlebih dahulu.")
+    st.caption(str(exc))
+    st.stop()
+
+# 4. Header Web
+st.markdown(
+    """
+    <div class="main-title">EXCIA</div>
+    <div class="main-subtitle">Asisten Spiritual AI<br>Mencerahkan pikiranmu dengan panduan dari Al-Qur'an</div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# 5. INISIALISASI MEMORI CHAT (Session State)
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "assistant", "content": "Halo! Aku EXCIA. Ceritakan apa yang sedang membebani pikiranmu hari ini, insyaAllah kita cari solusinya bersama dari petunjuk Al-Qur'an."}
+    ]
+
+# 6. MENAMPILKAN RIWAYAT CHAT
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        if msg["role"] == "user":
+            st.write(msg["content"])
+        else:
+            if msg["content"]:
+                st.markdown(f"<div class='chat-bubble nasihat'>{msg['content']}</div>", unsafe_allow_html=True)
+            
+            if msg.get("raw_quran"):
+                st.markdown("### 📖 Sumber Referensi")
+                surah = msg["raw_quran"].get('surat', '-')
+                ayat = msg["raw_quran"].get('ayat', '-')
+                teks_arab = msg["raw_quran"].get('teks_arab', None)
+                teks_terjemah = msg.get("teks_terjemah", None)
+                teks_tafsir_bersih = msg.get("teks_tafsir_bersih", "")
+                
+                st.markdown(f"<div class='chat-bubble surah'>SURAH {surah} • AYAT {ayat}</div>", unsafe_allow_html=True)
+                if teks_arab:
+                    st.markdown(f"<div class='chat-bubble ayat'>{teks_arab}</div>", unsafe_allow_html=True)
+                if teks_terjemah:
+                    st.markdown(f"<div class='chat-bubble terjemahan'>\"{teks_terjemah}\"</div>", unsafe_allow_html=True)
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    with st.expander("📚 Baca Tafsir Lengkap"):
+                        if teks_tafsir_bersih:
+                            st.markdown(f"<div class='chat-bubble tafsir'>{teks_tafsir_bersih}</div>", unsafe_allow_html=True)
+                        else:
+                            st.write("Tidak ada tafsir spesifik.")
+
+                with col2:
+                    with st.expander("📝 Baca Artikel Terkait"):
+                        if msg.get("raw_artikel"):
+                            judul = msg["raw_artikel"].get('judul', '-')
+                            url = msg["raw_artikel"].get('url', None)
+                            cuplikan = (msg["raw_artikel"].get('teks_lengkap', '') or '')[:500]
+                            st.markdown(f"<div class='chat-bubble artikel'><b>{judul}</b><br><br>{cuplikan}...</div>", unsafe_allow_html=True)
+                            if url:
+                                st.markdown(f"<a href='{url}' target='_blank' style='color:#38bdf8; font-weight:bold; text-decoration:none;'>🔗 Buka sumber</a>", unsafe_allow_html=True)
+
+# 7. LOGIKA INPUT CHAT BARU
+if prompt := st.chat_input("Tulis curhatan atau pertanyaanmu di sini..."):
     
-    return ExciaOrchestrator(repo_hf, kunci_pinecone, kunci_gemini)
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.write(prompt)
 
-excia = siapkan_mesin()
+    with st.chat_message("assistant"):
+        with st.spinner("EXCIA sedang menyiapkan nasihat dan rujukan terbaik..."):
+            hasil = excia.proses_curhatan(prompt)
+            
+            teks_lengkap_raw = hasil['raw_quran'].get('teks_lengkap', '') if hasil['raw_quran'] else ''
+            teks_terjemah_terpisah = hasil['raw_quran'].get('teks_terjemah', None) if hasil['raw_quran'] else None
+            teks_tafsir_final = teks_lengkap_raw
+            
+            if hasil['raw_quran'] and not teks_terjemah_terpisah and "Terjemahan:" in teks_lengkap_raw and "Tafsir:" in teks_lengkap_raw:
+                try:
+                    potongan_awal = teks_lengkap_raw.split("Tafsir:")[0]
+                    teks_terjemah_terpisah = potongan_awal.split("Terjemahan:")[1].strip()
+                    teks_tafsir_final = teks_lengkap_raw.split("Tafsir:")[1].strip()
+                except:
+                    pass
 
-# 3. Header UI
-st.title("✨ EXCIA: Asisten Spiritual AI")
-st.markdown("Ceritakan apa yang sedang membebani pikiranmu hari ini. Sistem akan mencarikan panduan dari Al-Qur'an dan merangkumnya khusus untukmu.")
-st.divider()
+            st.markdown(f"<div class='chat-bubble nasihat'>{hasil['nasihat_ai']}</div>", unsafe_allow_html=True)
+            
+            if hasil['raw_quran']:
+                st.markdown("### 📖 Sumber Referensi")
+                surah = hasil['raw_quran'].get('surat', '-')
+                ayat = hasil['raw_quran'].get('ayat', '-')
+                teks_arab = hasil['raw_quran'].get('teks_arab', None)
+                
+                st.markdown(f"<div class='chat-bubble surah'>SURAH {surah} • AYAT {ayat}</div>", unsafe_allow_html=True)
+                if teks_arab:
+                    st.markdown(f"<div class='chat-bubble ayat'>{teks_arab}</div>", unsafe_allow_html=True)
+                if teks_terjemah_terpisah:
+                    st.markdown(f"<div class='chat-bubble terjemahan'>\"{teks_terjemah_terpisah}\"</div>", unsafe_allow_html=True)
 
-# 4. Form Input User
-teks_input = st.text_area("Tuliskan curhatan atau pertanyaanmu di sini:", height=100, placeholder="Contoh: Jujur aku lagi overthinking banget soal kerjaan...")
-tombol_kirim = st.button("Minta Nasihat", type="primary")
+                col1, col2 = st.columns(2)
+                with col1:
+                    with st.expander("📚 Baca Tafsir Lengkap"):
+                        st.markdown(f"<div class='chat-bubble tafsir'>{teks_tafsir_final}</div>", unsafe_allow_html=True)
 
-# 5. Logika Eksekusi dan Desain 3 Panel
-if tombol_kirim and teks_input:
-    with st.spinner("EXCIA sedang menganalisis dan mencari referensi terbaik untukmu..."):
-        # Panggil fungsi dari backend.py
-        hasil = excia.proses_curhatan(teks_input)
-        
-        st.success(f"Analisis Selesai! Kategori terdeteksi: **{hasil['intent']}**")
-        
-        # --- DESAIN UI GRID ---
-        # Panel 1: Nasihat AI (Lebar penuh di atas)
-        st.subheader("💡 Nasihat untukmu")
-        st.info(hasil['nasihat_ai'])
-        
-        st.divider()
-        st.subheader("📚 Sumber Referensi yang Digunakan")
-        
-        # Membagi layar menjadi 2 kolom untuk referensi raw data
-        kolom_kiri, kolom_kanan = st.columns(2)
-        
-        # Panel 2: Kartu Al-Qur'an (Kolom Kiri)
-        with kolom_kiri:
-            with st.expander("📖 Referensi Al-Qur'an", expanded=True):
-                if hasil['raw_quran']:
-                    st.markdown(f"**Surat {hasil['raw_quran']['surat']} Ayat {hasil['raw_quran']['ayat']}**")
-                    st.write("Tafsir Kemenag:")
-                    st.write(hasil['raw_quran']['teks_lengkap'])
-                else:
-                    st.write("Tidak ada ayat yang spesifik ditemukan.")
-                    
-        # Panel 3: Artikel Pendukung (Kolom Kanan)
-        with kolom_kanan:
-            with st.expander("📝 Artikel Pendukung", expanded=True):
-                if hasil['raw_artikel']:
-                    st.markdown(f"**[{hasil['raw_artikel']['judul']}]({hasil['raw_artikel']['url']})**")
-                    st.write(hasil['raw_artikel']['teks_lengkap'][:500] + "...") # Tampilkan cuplikan saja
-                else:
-                    st.write("Tidak ada artikel terkait ditemukan.")
+                with col2:
+                    with st.expander("📝 Baca Artikel Terkait"):
+                        if hasil['raw_artikel']:
+                            judul = hasil['raw_artikel'].get('judul', '-')
+                            url = hasil['raw_artikel'].get('url', None)
+                            cuplikan = (hasil['raw_artikel'].get('teks_lengkap', '') or '')[:500]
+                            st.markdown(f"<div class='chat-bubble artikel'><b>{judul}</b><br><br>{cuplikan}...</div>", unsafe_allow_html=True)
+                            if url:
+                                st.markdown(f"<a href='{url}' target='_blank' style='color:#38bdf8; font-weight:bold; text-decoration:none;'>🔗 Buka sumber</a>", unsafe_allow_html=True)
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": hasil['nasihat_ai'],
+            "raw_quran": hasil['raw_quran'],
+            "raw_artikel": hasil['raw_artikel'],
+            "teks_terjemah": teks_terjemah_terpisah,
+            "teks_tafsir_bersih": teks_tafsir_final
+        })

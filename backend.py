@@ -28,7 +28,7 @@ class ExciaOrchestrator:
         
         # 4. Konfigurasi LLM Gemini (Pilar 4)
         genai.configure(api_key=gemini_api_key)
-        self.llm = genai.GenerativeModel('gemini-1.5-flash')
+        self.llm = genai.GenerativeModel('gemini-3.5-flash')
         
         # Kamus Normalisasi Slang
         self.kamus_slang = {"yg": "yang", "gmn": "bagaimana", "gimana": "bagaimana", "bgt": "sekali", "banget": "sekali", "gk": "tidak", "nggak": "tidak", "insecure": "kurang percaya diri", "overthinking": "terlalu banyak berpikir"}
@@ -84,6 +84,8 @@ class ExciaOrchestrator:
         1. Berikan nasihat yang hangat, empatik, dan menenangkan menggunakan bahasa sehari-hari.
         2. Rangkum intisari dari referensi Tafsir dan Artikel di atas ke dalam nasihatmu.
         3. DILARANG KERAS mengutip ayat di luar konteks referensi. DILARANG KERAS memodifikasi atau menerjemahkan ulang ayat. Fokus pada nasihat psikologis/spiritualnya saja.
+        4. Tidak perlu perkenalan km adalah AI Excia atau lainnya, fokus pada nasihatnya saja dan jangan terlalu baku seperti kata "hai sahabat" dan lainnya, buat senatural mungkin.
+        5. jawaban harus jangan terlalu panjang namun harus tetap jelas dan mengenai inti permasalahan pengguna, jangan terlalu singkat juga sehingga terkesan kurang membantu. Buat seimbang antara kehangatan dan kejelasan.
         """
         
         respons_llm = self.llm.generate_content(prompt_llm)
