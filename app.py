@@ -1,21 +1,27 @@
 import streamlit as st
 from backend import ExciaOrchestrator
 
-# 1. Konfigurasi Halaman
+# 1. Konfigurasi Halaman (Pastikan layout="wide" aktif)
 st.set_page_config(page_title="EXCIA - Asisten Spiritual", page_icon="🕊️", layout="wide")
 
-# 2. Injeksi CSS Khusus (Sudah Diperbaiki Kontras & Warnanya)
+# 2. Injeksi CSS Khusus (Sudah Diperbaiki Full Width & Bar Bawah)
 st.markdown(
     """
     <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap' rel='stylesheet'>
     <style>
-        html, body, [data-testid="stAppViewContainer"] {
+        html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewBlock"] {
             background: linear-gradient(135deg, #0f172a 0%, #0a2540 100%) !important;
             color: #e0f2fe;
             font-family: 'Inter', Arial, sans-serif;
         }
         [data-testid="stHeader"] {display: none;}
-        .block-container {padding-top: 2rem; padding-bottom: 6rem; max-width: 800px;}
+        
+        /* PERBAIKAN 1: LAYOUT MELEBAR SAMPAI PINGGIR */
+        .block-container {
+            padding-top: 2rem; 
+            padding-bottom: 6rem; 
+            max-width: 95% !important; /* Diubah dari 800px agar full width */
+        }
         
         .main-title {
             font-size: 2.7rem;
@@ -45,7 +51,7 @@ st.markdown(
         .chat-bubble.nasihat {
             background: rgba(34,211,238,0.12);
             border-left: 4px solid #38bdf8;
-            color: #ffffff; /* Teks dihitamkan agar kontras */
+            color: #ffffff;
             font-size: 1.1rem;
             font-weight: 600;
             box-shadow: 0 4px 20px rgba(56,189,248,0.1);
@@ -85,20 +91,21 @@ st.markdown(
             font-size: 0.95rem;
         }
         
-        /* PERBAIKAN 1: Hapus Kotak Putih Mentereng di Bawah */
+        /* PERBAIKAN 2: MENGHANCURKAN BAR PUTIH BAWAAN STREAMLIT */
+        [data-testid="stBottom"], [data-testid="stBottom"] > div {
+            background-color: #0a2540 !important; /* Samakan dengan warna dasar gradient paling bawah */
+            background: transparent !important;
+        }
         [data-testid="stBottomBlock"] {
             background: transparent !important;
-            background-color: #0a2540 !important; /* Warna fallback jika transparent gagal */
         }
 
-        /* PERBAIKAN 2: Desain Input Chat Box */
+        /* Desain Input Chat Box */
         [data-testid="stChatInput"] {
-            background-color: #1e293b !important; /* Warna kotak lebih terang sedikit dari background */
-            border: 1.5px solid #38bdf8 !important;
+            background-color: #1e293b !important; 
+            border: 1px solid #38bdf8 !important;
             border-radius: 12px !important;
         }
-        
-        /* PERBAIKAN 3: Warna Teks Ketikan & Placeholder agar Terbaca */
         [data-testid="stChatInput"] textarea {
             color: #ffffff !important;
         }
@@ -106,10 +113,8 @@ st.markdown(
             color: #94a3b8 !important;
         }
         [data-testid="stChatInput"] svg {
-            fill: #38bdf8 !important; /* Warna ikon panah kirim */
+            fill: #38bdf8 !important; 
         }
-        
-        /* PERBAIKAN 4: Warna pesan user bawaan Streamlit agar tidak hitam */
         [data-testid="stChatMessageContent"] {
             color: #e0f2fe !important;
         }
