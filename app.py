@@ -2,7 +2,7 @@ import streamlit as st
 from backend import ExciaOrchestrator
 
 # 1. Konfigurasi Halaman (Pastikan layout="wide" aktif)
-st.set_page_config(page_title="EXCIA - Asisten Spiritual", page_icon="🕊️", layout="wide")
+st.set_page_config(page_title="EXCIA - Asisten Spiritual", page_icon="🕋", layout="wide")
 
 # 2. Injeksi CSS Khusus (Sudah Diperbaiki Full Width & Bar Bawah)
 st.markdown(
@@ -24,7 +24,7 @@ st.markdown(
         }
         
         .main-title {
-            font-size: 2.7rem;
+            font-size: 5rem;
             font-weight: 900;
             color: #38bdf8;
             text-align: center;

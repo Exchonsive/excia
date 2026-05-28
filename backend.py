@@ -49,7 +49,7 @@ class ExciaOrchestrator:
         # Tarik Ayat Al-Qur'an (Universal)
         hasil_quran = self.index.query(
             vector=teks_vektor, 
-            top_k=1, 
+            top_k=20, 
             include_metadata=True,
             filter={"tipe_dokumen": {"$eq": "quran"}}
         )
@@ -63,36 +63,134 @@ class ExciaOrchestrator:
         )
         return hasil_quran, hasil_artikel
 
+    def cari_referensi_terpisah(self, vektor_quran, vektor_artikel, intent_kategori):
+        # Tarik Ayat Al-Qur'an menggunakan vektor murni
+        hasil_quran = self.index.query(
+            vector=vektor_quran, 
+            top_k=20, 
+            include_metadata=True,
+            filter={"tipe_dokumen": {"$eq": "quran"}}
+        )
+        
+        # Tarik Artikel menggunakan vektor ekspansi
+        hasil_artikel = self.index.query(
+            vector=vektor_artikel, 
+            top_k=1, 
+            include_metadata=True,
+            filter={"tipe_dokumen": {"$eq": "artikel"}, "intent_kategori": {"$eq": intent_kategori}}
+        )
+        return hasil_quran, hasil_artikel
+
     def proses_curhatan(self, input_user):
         teks_baku = self.normalisasi_teks(input_user)
         intent = self.prediksi_intent(teks_baku)
-        vektor_query = self.embed_model.encode(teks_baku).tolist()
-        
-        data_quran, data_artikel = self.cari_referensi(vektor_query, intent)
-        
-        teks_tafsir = data_quran['matches'][0]['metadata']['teks_lengkap'] if data_quran['matches'] else "Tidak ada referensi ayat."
-        teks_artikel = data_artikel['matches'][0]['metadata']['teks_lengkap'] if data_artikel['matches'] else "Tidak ada artikel terkait."
-        
+
+        # --- FIX 1: Query Rewriting ---
+        # Normalisasi query menjadi bentuk deklaratif sebelum di-embed
+        # supaya "ayat apa yang menjelaskan X" dan "ayat tentang X" → vektor sama
+        teks_rewrite = self._rewrite_query(teks_baku)
+
+        vektor_quran = self.embed_model.encode(
+            teks_rewrite, normalize_embeddings=True
+        ).tolist()
+        teks_ekspansi_artikel = f"Artikel Islami tentang {intent}. Topik: {teks_rewrite}"
+        vektor_artikel = self.embed_model.encode(
+            teks_ekspansi_artikel, normalize_embeddings=True
+        ).tolist()
+
+        data_quran, data_artikel = self.cari_referensi_terpisah(
+            vektor_quran, vektor_artikel, intent
+        )
+
+        # --- FIX 2: Kirim skor ke Gemini supaya dia tahu mana kandidat terkuat ---
+        teks_tafsir_gabungan = ""
+        if data_quran and data_quran['matches']:
+            for i, match in enumerate(data_quran['matches']):
+                meta = match['metadata']
+                skor = match['score']
+                teks_tafsir_gabungan += (
+                    f"\nKandidat [{i+1}] (Skor Relevansi: {skor:.4f})"
+                    f" - Surah {meta.get('surat')} Ayat {meta.get('ayat')}:\n"
+                    f"{meta.get('teks_lengkap')}\n"
+                )
+        else:
+            teks_tafsir_gabungan = "Tidak ada referensi ayat."
+
+        teks_artikel = (
+            data_artikel['matches'][0]['metadata']['teks_lengkap']
+            if data_artikel and data_artikel['matches']
+            else "Tidak ada artikel terkait."
+        )
+
         prompt_llm = f"""
-        Kamu adalah Asisten Spiritual EXCIA. Pengguna sedang menceritakan masalahnya: "{input_user}".
-        
-        BERIKUT ADALAH DATA REFERENSI YANG WAJIB KAMU GUNAKAN:
-        [1] Tafsir Al-Qur'an: {teks_tafsir}
-        [2] Artikel Pendukung: {teks_artikel}
-        
+        Kamu adalah Asisten Spiritual EXCIA. Pengguna bertanya: "{input_user}".
+
+        Di bawah ini kandidat ayat dari database, diurutkan dari PALING RELEVAN ke kurang relevan.
+        Skor Relevansi mendekati 1.0 = sangat cocok.
+
+        {teks_tafsir_gabungan}
+
+        [Artikel Pendukung]: {teks_artikel}
+
         INSTRUKSI MUTLAK:
-        1. Berikan nasihat yang hangat, empatik, dan menenangkan menggunakan bahasa sehari-hari.
-        2. Rangkum intisari dari referensi Tafsir dan Artikel di atas ke dalam nasihatmu.
-        3. DILARANG KERAS mengutip ayat di luar konteks referensi. DILARANG KERAS memodifikasi atau menerjemahkan ulang ayat. Fokus pada nasihat psikologis/spiritualnya saja.
-        4. Tidak perlu perkenalan km adalah AI Excia atau lainnya, fokus pada nasihatnya saja dan jangan terlalu baku seperti kata "hai sahabat" dan lainnya, buat senatural mungkin.
-        5. jawaban harus jangan terlalu panjang namun harus tetap jelas dan mengenai inti permasalahan pengguna, jangan terlalu singkat juga sehingga terkesan kurang membantu. Buat seimbang antara kehangatan dan kejelasan.
+        1. PRIORITASKAN kandidat dengan Skor Relevansi tertinggi kecuali ada alasan kuat memilih lain.
+        2. WAJIB sebutkan nama Surah dan angka Ayat persis seperti di list (contoh: "Surah Al-Baqarah Ayat 183").
+        3. Berikan nasihat hangat dan menenangkan.
+        4. DILARANG mengutip ayat di luar list kandidat.
+        5. Langsung berikan nasihat tanpa perkenalan robotik.
         """
-        
+
         respons_llm = self.llm.generate_content(prompt_llm)
-        
+
+        # --- FIX 3: Sinkronisasi UI lebih robust pakai nomor ayat saja ---
+        ayat_terpilih = data_quran['matches'][0]['metadata'] if data_quran['matches'] else None
+
+        if data_quran and data_quran['matches']:
+            for match in data_quran['matches']:
+                nomor_ayat = str(match['metadata'].get('ayat'))
+                nama_surat_raw = match['metadata'].get('surat', '')
+                # Normalisasi: hapus strip, lowercase, hapus "al-" prefix untuk matching longgar
+                nama_surat_norm = nama_surat_raw.lower().replace('-', ' ').replace("al ", "")
+                teks_respon_norm = respons_llm.text.lower().replace('-', ' ').replace("al ", "")
+
+                if nomor_ayat in respons_llm.text and nama_surat_norm in teks_respon_norm:
+                    ayat_terpilih = match['metadata']
+                    break
+
         return {
             "intent": intent,
             "nasihat_ai": respons_llm.text,
-            "raw_quran": data_quran['matches'][0]['metadata'] if data_quran['matches'] else None,
-            "raw_artikel": data_artikel['matches'][0]['metadata'] if data_artikel['matches'] else None
+            "raw_quran": ayat_terpilih,
+            "raw_artikel": (
+                data_artikel['matches'][0]['metadata']
+                if data_artikel and data_artikel['matches']
+                else None
+            ),
         }
+
+    # --- Tambahkan method baru ini di dalam class ExciaOrchestrator ---
+    def _rewrite_query(self, teks: str) -> str:
+        """
+        Normalisasi query dari bentuk pertanyaan → pernyataan deklaratif.
+        Tujuan: menyamakan distribusi vektor untuk query yang semantiknya sama
+        tapi phrasing-nya berbeda.
+        """
+        # Pola pertanyaan umum → strip jadi inti topik
+        prefixes_to_strip = [
+            "ayat apa yang menjelaskan tentang",
+            "ayat apa tentang",
+            "ayat yang membahas",
+            "tolong carikan ayat tentang",
+            "cari ayat tentang",
+            "apa kata quran tentang",
+            "bagaimana islam memandang",
+            "jelaskan tentang",
+        ]
+        teks_lower = teks.lower().strip(" ?")
+        for prefix in prefixes_to_strip:
+            if teks_lower.startswith(prefix):
+                teks_lower = teks_lower[len(prefix):].strip()
+                break
+
+        # Tambahkan framing deklaratif agar lebih cocok dengan konten Quran
+        return f"ajaran Islam tentang {teks_lower}"
