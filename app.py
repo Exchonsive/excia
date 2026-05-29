@@ -1,14 +1,15 @@
 import streamlit as st
 from backend import ExciaOrchestrator
 
-# 1. Konfigurasi Halaman (Pastikan layout="wide" aktif)
-st.set_page_config(page_title="EXCIA - Asisten Spiritual", page_icon="🕋", layout="wide")
+# 1. Konfigurasi Halaman 
+st.set_page_config(page_title="EXCIA - Asisten Spiritual", page_icon="✨", layout="wide")
 
-# 2. Injeksi CSS Khusus (Sudah Diperbaiki Full Width & Bar Bawah)
+# 2. Injeksi CSS Khusus (UI/UX Premium)
 st.markdown(
     """
-    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap' rel='stylesheet'>
+    <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap' rel='stylesheet'>
     <style>
+        /* Base Styling */
         html, body, [data-testid="stAppViewContainer"], [data-testid="stAppViewBlock"] {
             background: linear-gradient(135deg, #0f172a 0%, #0a2540 100%) !important;
             color: #e0f2fe;
@@ -16,108 +17,172 @@ st.markdown(
         }
         [data-testid="stHeader"] {display: none;}
         
-        /* PERBAIKAN 1: LAYOUT MELEBAR SAMPAI PINGGIR */
         .block-container {
-            padding-top: 2rem; 
-            padding-bottom: 6rem; 
-            max-width: 95% !important; /* Diubah dari 800px agar full width */
+            padding-top: 3rem; 
+            padding-bottom: 7rem; 
+            max-width: 90% !important; 
         }
         
+        /* Typography */
         .main-title {
-            font-size: 5rem;
+            font-size: 4.5rem;
             font-weight: 900;
             color: #38bdf8;
             text-align: center;
-            letter-spacing: -0.03em;
-            margin-bottom: 0.15rem;
-            text-shadow: 0 4px 32px #0ff3, 0 1px 0 #222b;
+            letter-spacing: -0.04em;
+            margin-bottom: 0.2rem;
+            text-shadow: 0 4px 32px rgba(56, 189, 248, 0.4), 0 1px 0 rgba(0,0,0,0.5);
         }
         .main-subtitle {
-            font-size: 1.08rem;
-            color: #a5b4fc;
+            font-size: 1.1rem;
+            color: #94a3b8;
             text-align: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 3.5rem;
             font-weight: 400;
+            letter-spacing: 0.02em;
+        }
+
+        /* Badge IndoBERT Intent */
+        .badge-intent {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #7dd3fc;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
         }
         
-        /* Modifikasi Chat Bubble */
+        /* Chat Bubbles */
         .chat-bubble {
-            border-radius: 12px;
-            padding: 1.2rem 1.5rem;
+            border-radius: 14px;
+            padding: 1.4rem 1.6rem;
             margin-bottom: 1.2rem;
             text-align: left;
-            line-height: 1.6;
+            line-height: 1.7;
+            font-size: 1.05rem;
         }
         .chat-bubble.nasihat {
-            background: rgba(34,211,238,0.12);
+            background: rgba(30, 41, 59, 0.7);
             border-left: 4px solid #38bdf8;
-            color: #ffffff;
-            font-size: 1.1rem;
-            font-weight: 600;
-            box-shadow: 0 4px 20px rgba(56,189,248,0.1);
+            color: #f8fafc;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Referensi Section */
+        .ref-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #38bdf8;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .chat-bubble.surah {
-            color: #38bdf8;
-            font-size: 0.95rem;
+            color: #7dd3fc;
+            font-size: 0.9rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.15em;
             margin-bottom: 0.5rem;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
         }
         .chat-bubble.ayat {
-            background: rgba(59,130,246,0.08);
-            border: 1px solid rgba(125,211,252,0.3);
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(56, 189, 248, 0.15);
             color: #bae6fd;
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 700;
             text-align: right;
             direction: rtl; 
-            line-height: 2.2;
-            padding: 1.5rem;
+            line-height: 2.4;
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
             font-family: 'Amiri', 'Scheherazade New', serif;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
         }
         .chat-bubble.terjemahan {
-            color: #a5b4fc;
-            font-size: 1.05rem;
+            color: #94a3b8;
+            font-size: 1.1rem;
             font-style: italic;
             margin-top: -0.5rem;
-            margin-bottom: 1.5rem;
-        }
-        .chat-bubble.tafsir, .chat-bubble.artikel {
-            background: rgba(59,130,246,0.05);
-            border: 1px solid rgba(165,180,252,0.2);
-            color: #cbd5e1;
-            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            padding-left: 1rem;
+            border-left: 2px solid rgba(148, 163, 184, 0.3);
         }
         
-        /* PERBAIKAN 2: MENGHANCURKAN BAR PUTIH BAWAAN STREAMLIT */
-        [data-testid="stBottom"], [data-testid="stBottom"] > div {
-            background-color: #0a2540 !important; /* Samakan dengan warna dasar gradient paling bawah */
-            background: transparent !important;
+        /* Expanders (Tafsir & Artikel) */
+        .chat-bubble.tafsir, .chat-bubble.artikel {
+            background: rgba(15, 23, 42, 0.3); 
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            border-radius: 12px;
         }
-        [data-testid="stBottomBlock"] {
-            background: transparent !important;
+        .scrollable-box {
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 12px;
+        }
+        .scrollable-box::-webkit-scrollbar { width: 6px; }
+        .scrollable-box::-webkit-scrollbar-track { background: transparent; }
+        .scrollable-box::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); border-radius: 8px; }
+        .scrollable-box::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.6); }
+        
+        .artikel-title {
+            font-size: 1.1rem;
+            color: #e0f2fe;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .btn-sumber {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.6rem 1.4rem;
+            background: transparent;
+            color: #38bdf8 !important;
+            border: 1px solid #38bdf8;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+            text-align: center;
+            width: 100%;
+        }
+        .btn-sumber:hover {
+            background: #38bdf8;
+            color: #0f172a !important;
         }
 
-        /* Desain Input Chat Box */
+        /* Streamlit Overrides */
+        [data-testid="stBottom"], [data-testid="stBottom"] > div { background: transparent !important; }
+        [data-testid="stBottomBlock"] { background: transparent !important; }
+        
+        /* Chat Input Glow Up */
         [data-testid="stChatInput"] {
-            background-color: #1e293b !important; 
-            border: 1px solid #38bdf8 !important;
-            border-radius: 12px !important;
+            background-color: rgba(30, 41, 59, 0.8) !important; 
+            border: 1px solid rgba(56, 189, 248, 0.4) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
         }
-        [data-testid="stChatInput"] textarea {
-            color: #ffffff !important;
-        }
-        [data-testid="stChatInput"] textarea::placeholder {
-            color: #94a3b8 !important;
-        }
-        [data-testid="stChatInput"] svg {
-            fill: #38bdf8 !important; 
-        }
-        [data-testid="stChatMessageContent"] {
-            color: #e0f2fe !important;
-        }
+        [data-testid="stChatInput"] textarea { color: #f8fafc !important; font-size: 1.05rem; }
+        [data-testid="stChatInput"] textarea::placeholder { color: #64748b !important; }
+        [data-testid="stChatInput"] svg { fill: #38bdf8 !important; }
+        
+        /* Avatar adjustments */
+        [data-testid="stChatMessageAvatarUser"] { background-color: #334155; }
+        [data-testid="stChatMessageAvatarAssistant"] { background-color: #0284c7; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -140,7 +205,7 @@ except Exception as exc:
 st.markdown(
     """
     <div class="main-title">EXCIA</div>
-    <div class="main-subtitle">Asisten Spiritual AI<br>Mencerahkan pikiranmu dengan panduan dari Al-Qur'an</div>
+    <div class="main-subtitle">Asisten Spiritual AI berbasis Al-Qur'an & Pemahaman Kontekstual</div>
     """,
     unsafe_allow_html=True,
 )
@@ -148,20 +213,24 @@ st.markdown(
 # 5. INISIALISASI MEMORI CHAT (Session State)
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "Halo! Aku EXCIA. Ceritakan apa yang sedang membebani pikiranmu hari ini, insyaAllah kita cari solusinya bersama dari petunjuk Al-Qur'an."}
+        {"role": "assistant", "content": "Halo! Aku EXCIA. Ceritakan apa yang sedang membebani pikiranmu hari ini, insyaAllah kita cari solusinya bersama dari petunjuk Al-Qur'an.", "intent": None}
     ]
 
 # 6. MENAMPILKAN RIWAYAT CHAT
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
+    avatar_icon = "👤" if msg["role"] == "user" else "✨"
+    with st.chat_message(msg["role"], avatar=avatar_icon):
         if msg["role"] == "user":
             st.write(msg["content"])
         else:
+            if msg.get("intent"):
+                st.markdown(f"<div class='badge-intent'>🎯 Topik Terdeteksi: {msg['intent']}</div>", unsafe_allow_html=True)
+                
             if msg["content"]:
                 st.markdown(f"<div class='chat-bubble nasihat'>{msg['content']}</div>", unsafe_allow_html=True)
             
             if msg.get("raw_quran"):
-                st.markdown("### 📖 Sumber Referensi")
+                st.markdown("<div class='ref-header'>📖 Sumber Referensi</div>", unsafe_allow_html=True)
                 surah = msg["raw_quran"].get('surat', '-')
                 ayat = msg["raw_quran"].get('ayat', '-')
                 teks_arab = msg["raw_quran"].get('teks_arab', None)
@@ -176,31 +245,37 @@ for msg in st.session_state.messages:
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    with st.expander("📚 Baca Tafsir Lengkap"):
+                    with st.expander("📚 Baca Tafsir Lengkap", expanded=False):
                         if teks_tafsir_bersih:
-                            st.markdown(f"<div class='chat-bubble tafsir'>{teks_tafsir_bersih}</div>", unsafe_allow_html=True)
+                            st.markdown(f"<div class='scrollable-box'><div class='chat-bubble tafsir'>{teks_tafsir_bersih}</div></div>", unsafe_allow_html=True)
                         else:
-                            st.write("Tidak ada tafsir spesifik.")
+                            st.markdown("<div class='chat-bubble tafsir'>Tafsir tidak tersedia untuk ayat ini.</div>", unsafe_allow_html=True)
 
                 with col2:
-                    with st.expander("📝 Baca Artikel Terkait"):
+                    with st.expander("📝 Baca Artikel Terkait", expanded=False):
                         if msg.get("raw_artikel"):
-                            judul = msg["raw_artikel"].get('judul', '-')
+                            judul = msg["raw_artikel"].get('judul', 'Artikel Pendukung')
                             url = msg["raw_artikel"].get('url', None)
-                            cuplikan = (msg["raw_artikel"].get('teks_lengkap', '') or '')[:500]
-                            st.markdown(f"<div class='chat-bubble artikel'><b>{judul}</b><br><br>{cuplikan}...</div>", unsafe_allow_html=True)
+                            cuplikan = (msg["raw_artikel"].get('teks_lengkap', '') or '')[:600]
+                            
+                            html_artikel = f"<div class='scrollable-box'><div class='chat-bubble artikel'><div class='artikel-title'>{judul}</div>{cuplikan}..."
                             if url:
-                                st.markdown(f"<a href='{url}' target='_blank' style='color:#38bdf8; font-weight:bold; text-decoration:none;'>🔗 Buka sumber</a>", unsafe_allow_html=True)
+                                html_artikel += f"<br><a href='{url}' target='_blank' class='btn-sumber'>🔗 Baca Selengkapnya</a>"
+                            html_artikel += "</div></div>"
+                            
+                            st.markdown(html_artikel, unsafe_allow_html=True)
+                        else:
+                            st.markdown("<div class='chat-bubble artikel'>Maaf, saat ini belum ada artikel yang spesifik terkait topik ini di dalam database.</div>", unsafe_allow_html=True)
 
 # 7. LOGIKA INPUT CHAT BARU
 if prompt := st.chat_input("Tulis curhatan atau pertanyaanmu di sini..."):
     
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="👤"):
         st.write(prompt)
 
-    with st.chat_message("assistant"):
-        with st.spinner("EXCIA sedang menyiapkan nasihat dan rujukan terbaik..."):
+    with st.chat_message("assistant", avatar="✨"):
+        with st.spinner("EXCIA sedang memikirkan nasihat dan mencari rujukan terbaik..."):
             hasil = excia.proses_curhatan(prompt, chat_history=st.session_state.messages)
             
             teks_lengkap_raw = hasil['raw_quran'].get('teks_lengkap', '') if hasil['raw_quran'] else ''
@@ -215,10 +290,13 @@ if prompt := st.chat_input("Tulis curhatan atau pertanyaanmu di sini..."):
                 except:
                     pass
 
+            if hasil.get('intent'):
+                st.markdown(f"<div class='badge-intent'>🎯 Topik Terdeteksi: {hasil['intent']}</div>", unsafe_allow_html=True)
+
             st.markdown(f"<div class='chat-bubble nasihat'>{hasil['nasihat_ai']}</div>", unsafe_allow_html=True)
             
             if hasil['raw_quran']:
-                st.markdown("### 📖 Sumber Referensi")
+                st.markdown("<div class='ref-header'>📖 Sumber Referensi</div>", unsafe_allow_html=True)
                 surah = hasil['raw_quran'].get('surat', '-')
                 ayat = hasil['raw_quran'].get('ayat', '-')
                 teks_arab = hasil['raw_quran'].get('teks_arab', None)
@@ -231,18 +309,27 @@ if prompt := st.chat_input("Tulis curhatan atau pertanyaanmu di sini..."):
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    with st.expander("📚 Baca Tafsir Lengkap"):
-                        st.markdown(f"<div class='chat-bubble tafsir'>{teks_tafsir_final}</div>", unsafe_allow_html=True)
+                    with st.expander("📚 Baca Tafsir Lengkap", expanded=False):
+                        if teks_tafsir_final:
+                            st.markdown(f"<div class='scrollable-box'><div class='chat-bubble tafsir'>{teks_tafsir_final}</div></div>", unsafe_allow_html=True)
+                        else:
+                            st.markdown("<div class='chat-bubble tafsir'>Tafsir tidak tersedia untuk ayat ini.</div>", unsafe_allow_html=True)
 
                 with col2:
-                    with st.expander("📝 Baca Artikel Terkait"):
-                        if hasil['raw_artikel']:
-                            judul = hasil['raw_artikel'].get('judul', '-')
+                    with st.expander("📝 Baca Artikel Terkait", expanded=False):
+                        if hasil.get('raw_artikel'):
+                            judul = hasil['raw_artikel'].get('judul', 'Artikel Pendukung')
                             url = hasil['raw_artikel'].get('url', None)
-                            cuplikan = (hasil['raw_artikel'].get('teks_lengkap', '') or '')[:500]
-                            st.markdown(f"<div class='chat-bubble artikel'><b>{judul}</b><br><br>{cuplikan}...</div>", unsafe_allow_html=True)
+                            cuplikan = (hasil['raw_artikel'].get('teks_lengkap', '') or '')[:600]
+                            
+                            html_artikel = f"<div class='scrollable-box'><div class='chat-bubble artikel'><div class='artikel-title'>{judul}</div>{cuplikan}..."
                             if url:
-                                st.markdown(f"<a href='{url}' target='_blank' style='color:#38bdf8; font-weight:bold; text-decoration:none;'>🔗 Buka sumber</a>", unsafe_allow_html=True)
+                                html_artikel += f"<br><a href='{url}' target='_blank' class='btn-sumber'>🔗 Baca Selengkapnya</a>"
+                            html_artikel += "</div></div>"
+                            
+                            st.markdown(html_artikel, unsafe_allow_html=True)
+                        else:
+                            st.markdown("<div class='chat-bubble artikel'>Maaf, saat ini belum ada artikel yang spesifik terkait topik ini di dalam database.</div>", unsafe_allow_html=True)
 
         st.session_state.messages.append({
             "role": "assistant",
@@ -250,5 +337,6 @@ if prompt := st.chat_input("Tulis curhatan atau pertanyaanmu di sini..."):
             "raw_quran": hasil['raw_quran'],
             "raw_artikel": hasil['raw_artikel'],
             "teks_terjemah": teks_terjemah_terpisah,
-            "teks_tafsir_bersih": teks_tafsir_final
+            "teks_tafsir_bersih": teks_tafsir_final,
+            "intent": hasil.get('intent')
         })
