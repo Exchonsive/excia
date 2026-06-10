@@ -12,10 +12,10 @@ class ExciaOrchestrator:
         print("Memuat Komponen EXCIA...")
         
         pinecone_api_key = os.getenv("PINECONE_API_KEY")
-        gemini_keys_raw = os.getenv("GEMINI_API_KEYS")
+        gemini_keys_raw = os.getenv("GEMINI_API_KEY")
         
         if not pinecone_api_key or not gemini_keys_raw:
-            raise ValueError("Kritikal Error: API Key PINECONE_API_KEY atau GEMINI_API_KEYS belum diatur!")
+            raise ValueError("Kritikal Error: API Key PINECONE_API_KEY atau GEMINI_API_KEY belum diatur!")
         
         self.gemini_keys = [k.strip() for k in gemini_keys_raw.split(",")]
         self.current_key_idx = 0 
@@ -29,7 +29,7 @@ class ExciaOrchestrator:
         self.index = self.pc.Index("excia-index")
         
         genai.configure(api_key=self.gemini_keys[self.current_key_idx])
-        self.llm = genai.GenerativeModel('gemini-1.5-flash-8b') # Memastikan pakai model teringan dan tercepat
+        self.llm = genai.GenerativeModel('gemini-3.1-flash-lite') # Memastikan pakai model teringan dan tercepat
         
         self.kamus_slang = {"yg": "yang", "gmn": "bagaimana", "gimana": "bagaimana", "bgt": "sekali", "banget": "sekali", "gk": "tidak", "nggak": "tidak", "insecure": "kurang percaya diri", "overthinking": "terlalu banyak berpikir"}
 
