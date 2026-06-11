@@ -1,64 +1,159 @@
-# EXCIA
+# EXCIA — Asisten Spiritual AI
 
-> EXCIA — Asisten Spiritual AI yang membantu memberikan nasihat berbasis referensi Al-Qur'an dan artikel pendukung.
+> Asisten Spiritual AI yang membantu memberikan nasihat berbasis referensi Al-Qur'an dan artikel pendukung menggunakan teknologi AI dan vector search.
 
-Ringkasan
-- Bahasa: Python
-- UI: Streamlit (`app.py`)
-- Orkestrator: `backend.py` (kelas `ExciaOrchestrator`)
-- Tujuan: menerima 'curhatan' pengguna, menentukan intent, menarik ayat/ artikel relevan dari Pinecone, lalu menghasilkan nasihat dengan LLM Gemini.
+## 📋 Ringkasan Singkat
 
-Fitur Utama
-- Normalisasi slang dan pre-processing teks.
-- Klasifikasi intent menggunakan model IndoBERT (HF repo `Exchonsive/excia-indobert-intent`).
-- Embedding dengan `paraphrase-multilingual-MiniLM-L12-v2` (SentenceTransformers).
-- Penyimpanan/pencarian vektor menggunakan Pinecone (index: `excia-index`).
-- Generasi jawaban/penyusunan nasihat menggunakan Google Gemini (`gemini-3.5-flash`).
-- Tampilan chat interaktif dengan Streamlit, lengkap dengan tampilan ayat (Arab), terjemahan, tafsir, dan artikel.
+| Aspek | Deskripsi |
+|-------|----------|
+| **Bahasa** | Python 3.8+ |
+| **UI** | Streamlit (`app.py`) |
+| **Backend** | `backend.py` (kelas `ExciaOrchestrator`) |
+| **Tujuan** | Menerima curhatan pengguna, menentukan intent, mencari ayat/artikel relevan, lalu menghasilkan nasihat spiritual berbasis Al-Qur'an |
 
-Persyaratan (dilihat di `requirements.txt`)
-- streamlit==1.32.0
-- pinecone-client==3.1.0
-- sentence-transformers==2.5.1
-- transformers==4.38.2
-- torch==2.2.1
-- google-generativeai
+## ✨ Fitur Utama
 
+- **Normalisasi Teks**: Normalisasi slang dan pre-processing teks Bahasa Indonesia
+- **Klasifikasi Intent**: Menggunakan model IndoBERT (`Exchonsive/excia-indobert-intent`) untuk memahami maksud pengguna
+- **Embedding Multilingual**: Embedding teks dengan `paraphrase-multilingual-MiniLM-L12-v2` (SentenceTransformers)
+- **Vector Search**: Penyimpanan dan pencarian vektor menggunakan Pinecone (index: `excia-index`)
+- **Generasi Nasihat**: Penyusunan nasihat kontekstual dengan Google Gemini (`gemini-3.5-flash`)
+- **UI Interaktif**: Chat interface dengan Streamlit, menampilkan ayat (teks Arab), terjemahan, tafsir, dan artikel pendukung
+- **In-Memory Caching**: Caching hasil untuk performa lebih baik
+- **JSON Schema Validation**: Enforced JSON response dari LLM untuk output yang terstruktur
 
-Arsitektur & Alur Kerja Singkat
-1. Pengguna memasukkan pesan melalui antarmuka Streamlit (`app.py`).
-2. `ExciaOrchestrator` menormalisasi teks, memprediksi intent, lalu membuat embedding query.
-3. Query embedding digunakan untuk mencari ayat dan artikel di Pinecone.
-4. Hasil pencarian dirangkum/diurutkan, lalu dikirimkan ke LLM Gemini untuk menyusun nasihat yang kontekstual.
-5. Hasil (nasihat, metadata ayat, artikel) ditampilkan di UI dan disimpan di `st.session_state`.
+## 🏗️ Tech Stack
 
-Cara Menjalankan (lokal)
-1. Buat environment virtual Python (disarankan). Contoh:
+| Komponen | Teknologi |
+|----------|----------|
+| **Framework UI** | Streamlit 1.32.0 |
+| **Vector DB** | Pinecone 3.1.0 |
+| **Embeddings** | SentenceTransformers 2.5.1 |
+| **Intent Classification** | Transformers 4.38.2, IndoBERT |
+| **Deep Learning** | PyTorch 2.2.1 |
+| **LLM** | Google Generative AI (Gemini) |
+
+## 📦 Dependensi
+
+Lihat `requirements.txt` untuk daftar lengkap semua dependensi:
+```
+streamlit==1.32.0
+pinecone-client==3.1.0
+sentence-transformers==2.5.1
+transformers==4.38.2
+torch==2.2.1
+google-generativeai==0.5.0
+python-dotenv==1.0.0
+requests>=2.31.0
+```
+
+## 📊 Struktur Proyek
 
 ```
+.
+├── app.py              # Frontend Streamlit (UI Chat)
+├── backend.py          # Backend Orchestrator (Logic)
+├── requirements.txt    # Dependensi Python
+├── README.md           # Dokumentasi (file ini)
+├── LICENSE             # Lisensi proyek
+└── .env.example        # Template environment variables
+```
+
+## 🔧 Arsitektur & Alur Kerja
+
+**Alur Kerja:**
+1. Pengguna memasukkan pesan melalui antarmuka Streamlit (`app.py`)
+2. `ExciaOrchestrator` menormalisasi teks dan memprediksi intent menggunakan model IndoBERT
+3. Teks ditransformasi menjadi embedding menggunakan SentenceTransformers
+4. Embedding digunakan untuk mencari ayat dan artikel relevan di Pinecone
+5. Hasil pencarian diproses dan dikirim ke Google Gemini dengan JSON Schema untuk penyusunan nasihat
+6. Hasil (nasihat, metadata ayat, artikel) ditampilkan di UI dan di-cache di `st.session_state`
+
+## 🚀 Cara Menjalankan (Lokal)
+
+### Prerequisites
+- Python 3.8 atau lebih tinggi
+- Pinecone API Key (gratis: https://www.pinecone.io/)
+- Google Gemini API Key (gratis: https://aistudio.google.com/app/apikey)
+
+### Setup Langkah demi Langkah
+
+**1. Clone repository dan masuk folder:**
+```bash
+git clone https://github.com/Exchonsive/excia.git
+cd excia
+```
+
+**2. Buat virtual environment Python (disarankan):**
+```bash
 python -m venv .venv
+
+# Untuk Linux/macOS:
 source .venv/bin/activate
+
+# Untuk Windows:
+.venv\Scripts\activate
+```
+
+**3. Install dependencies:**
+```bash
 pip install -r requirements.txt
 ```
 
-2. Set environment variables sebelum menjalankan:
+**4. Konfigurasi environment variables:**
 
-```
-export PINECONE_API_KEY="<your-pinecone-key>"
-export GEMINI_API_KEY="<your-gemini-key>"
+Buat file `.env` di root folder:
+```bash
+cat > .env << EOF
+PINECONE_API_KEY="your-pinecone-api-key-here"
+GEMINI_API_KEY="your-gemini-api-key-here"
+EOF
 ```
 
-3. Jalankan aplikasi Streamlit:
-
+Atau set langsung di terminal:
+```bash
+export PINECONE_API_KEY="your-pinecone-api-key"
+export GEMINI_API_KEY="your-gemini-api-key"
 ```
+
+**5. Jalankan aplikasi Streamlit:**
+```bash
 streamlit run app.py
 ```
 
-Catatan Keamanan
-- Jangan pernah commit API key ke repository. Gunakan secrets manager atau CI/CD secret store.
-- Pastikan index Pinecone (`excia-index`) sudah dibuat dan berisi dokumen dengan metadata yang sesuai (`tipe_dokumen`, `surat`, `ayat`, `teks_lengkap`, dsb.).
+Aplikasi akan terbuka di `http://localhost:8501`
 
-Catatan Pengembang
-- Model HF untuk intent: `Exchonsive/excia-indobert-intent` di-load pada inisialisasi.
-- LLM yang dipakai di `backend.py` adalah `gemini-3.5-flash` melalui `google.generativeai`.
+## 🔐 Catatan Keamanan
+
+- ⚠️ **JANGAN** pernah commit API key ke repository
+- Gunakan secrets manager atau CI/CD secret store untuk production
+- Pastikan `.env` file di-add ke `.gitignore`
+- Pastikan index Pinecone (`excia-index`) sudah dibuat dengan metadata yang sesuai: `tipe_dokumen`, `surat`, `ayat`, `teks_lengkap`, dst.
+- Gunakan API key dengan permission minimal yang diperlukan
+- Rate limit free tier Google Gemini: ~30 RPM (3+ detik jeda antar call)
+
+## 📝 Catatan Pengembang
+
+- Model intent classification di-load sekali pada inisialisasi `ExciaOrchestrator`
+- Cache in-memory di-reset setiap kali Streamlit rerun
+- JSON Schema di-enforce di level API untuk memastikan response terstruktur
+- PyTorch CUDA support opsional; code support CPU fallback
+- Model HF untuk intent: `Exchonsive/excia-indobert-intent`
+- LLM yang dipakai di `backend.py` adalah `gemini-3.5-flash` melalui `google.generativeai`
+
+## 📄 License
+
+Proyek ini dilisensikan di bawah lisensi yang ditentukan di file [LICENSE](LICENSE).
+
+## 🤝 Contributing
+
+Kontribusi sangat diterima! Silakan buat pull request atau buka issue untuk saran dan perbaikan.
+
+## 🔗 Links & Resources
+
+- [Streamlit Documentation](https://docs.streamlit.io/)
+- [Pinecone Vector Database](https://www.pinecone.io/)
+- [Google Generative AI](https://ai.google.dev/)
+- [Hugging Face Models](https://huggingface.co/)
+- [SentenceTransformers](https://www.sbert.net/)
 
