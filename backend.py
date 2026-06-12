@@ -10,12 +10,13 @@ from pinecone import Pinecone
 from google import genai
 from google.genai import types
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  KONSTANTA
 # ─────────────────────────────────────────────────────────────────────────────
-CONFIDENCE_THRESHOLD  = 60    # Di bawah ini, UI tampilkan disclaimer
-MIN_CALL_INTERVAL     = 3.0   # Detik minimum antar Gemini call (free tier: 30 RPM)
-CACHE_MAX_SIZE        = 50    # Maksimum entri cache in-memory
+CONFIDENCE_THRESHOLD  = 60    
+MIN_CALL_INTERVAL     = 3.0   
+CACHE_MAX_SIZE        = 50    
 
 # JSON Schema di-enforce di level API — bukan sekadar instruksi prompt.
 # is_relevant menggabungkan off-topic guard + jawaban dalam 1 call.
@@ -183,6 +184,11 @@ class ExciaOrchestrator:
                     model=model_saat_ini,
                     contents=prompt_teks,
                     config=types.GenerateContentConfig(
+                        system_instruction=(                          # ← TAMBAH INI
+                            "Kamu adalah EXCIA, asisten spiritual Islam. "
+                            "Kamu HANYA boleh merujuk ayat Al-Qur'an yang secara eksplisit tercantum dalam konteks yang diberikan. "
+                            "Dilarang keras menggunakan pengetahuan mu tentang ayat di luar daftar kandidat yang diberikan."
+                        ),
                         response_mime_type="application/json",
                         response_schema=RESPONSE_SCHEMA,
                         temperature=0.3,
