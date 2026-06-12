@@ -123,14 +123,31 @@ streamlit run app.py
 
 Aplikasi akan terbuka di `http://localhost:8501`
 
-## 🔐 Catatan Keamanan
+## 🛡️ Mitigasi Halusinasi & Keamanan Pemanggilan API
 
-- ⚠️ **JANGAN** pernah commit API key ke repository
-- Gunakan secrets manager atau CI/CD secret store untuk production
-- Pastikan `.env` file di-add ke `.gitignore`
-- Pastikan index Pinecone (`excia-index`) sudah dibuat dengan metadata yang sesuai: `tipe_dokumen`, `surat`, `ayat`, `teks_lengkap`, dst.
-- Gunakan API key dengan permission minimal yang diperlukan
-- Rate limit free tier Google Gemini: ~30 RPM (3+ detik jeda antar call)
+Saya telah menambahkan beberapa langkah di backend untuk mengurangi halusinasi LLM dan meningkatkan keamanan panggilan API:
+
+- **Retrieval-Augmented Generation (RAG)**: selalu sertakan hasil pencarian (ayat/artikel) sebagai konteks eksplisit ke LLM; hindari menjawab tanpa sumber.
+- **Enforce JSON Schema**: response LLM divalidasi terhadap JSON Schema; bila tidak valid sistem akan meminta re-generation atau menggunakan template jawaban konservatif.
+- **Source Attribution & Highlighting**: sertakan metadata sumber (surat/ayat/id artikel) dan confidence score; tampilkan potongan sumber di UI agar jawaban dapat dilacak.
+- **Output Filtering & Safety Layers**: filter profanity, tautan berbahaya, dan klaim medis/diagnostik; tandai respons yang memerlukan rujukan manusia.
+- **Verification Step (LLM as verifier)**: jalankan langkah verifikasi internal (model verifier atau heuristik) untuk mendeteksi probabilitas halusinasi.
+- **Conservative Generation**: gunakan pengaturan temperatur lebih rendah dan top_p lebih konservatif; tambahkan prompt constraints seperti "jawab hanya berdasarkan sumber yang tersedia".
+- **Rate Limiting & Backoff**: implementasi rate limiter, retries eksponensial, dan circuit-breaker pada panggilan eksternal (Gemini, Pinecone).
+- **Input Validation & Sanitization**: validasi schema input, batasi panjang konteks, dan normalisasi teks untuk mencegah injection atau prompt tampering.
+- **Logging & Monitoring**: log permintaan/responses dengan redaksi PII, kumpulkan telemetry untuk analisis kasus halusinasi, dan pasang alerting untuk pola anomali.
+- **Fallback & Human-in-the-loop**: jika confidence rendah atau mismatch sumber, fallback ke template aman dan kirim flag untuk review manusia.
+
+Integrasi spesifik di `backend.py`:
+- `generate_with_sources()` — menyusun prompt RAG lengkap dengan metadata sumber.
+- `validate_llm_response()` — melakukan validasi JSON Schema dan filter keamanan sebelum mengembalikan hasil ke UI.
+- `retry_api_call()` — wrapper untuk pemanggilan eksternal dengan exponential backoff dan circuit-breaker.
+- `verifier_check()` — langkah verifikasi internal (panggilan model/verifier) untuk mengevaluasi faithfulness.
+
+Rekomendasi operasional:
+- Buat end-to-end tests yang mensimulasikan adversarial prompts dan edge cases.
+- Simpan sampel kasus halusinasi untuk analisis dan potensi fine-tuning model retrieval atau reranker.
+- Gunakan secrets manager dan batasi scope API key pada lingkungan production.
 
 ## 📝 Catatan Pengembang
 
@@ -151,9 +168,5 @@ Kontribusi sangat diterima! Silakan buat pull request atau buka issue untuk sara
 
 ## 🔗 Links & Resources
 
-- [Streamlit Documentation](https://docs.streamlit.io/)
-- [Pinecone Vector Database](https://www.pinecone.io/)
-- [Google Generative AI](https://ai.google.dev/)
-- [Hugging Face Models](https://huggingface.co/)
-- [SentenceTransformers](https://www.sbert.net/)
+Live: https://chatexcia.streamlit.app/
 
