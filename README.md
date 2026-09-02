@@ -1,172 +1,173 @@
 # EXCIA — Asisten Spiritual AI
 
-> Asisten Spiritual AI yang membantu memberikan nasihat berbasis referensi Al-Qur'an dan artikel pendukung menggunakan teknologi AI dan vector search.
+> Asisten spiritual berbasis Islam yang membantu menjawab pertanyaan secara empatik, dengan referensi ayat Al-Qur'an dan artikel pendukung yang relevan.
 
-## 📋 Ringkasan Singkat
+## Ringkasan proyek
 
-| Aspek | Deskripsi |
-|-------|----------|
-| **Bahasa** | Python 3.8+ |
-| **UI** | Streamlit (`app.py`) |
-| **Backend** | `backend.py` (kelas `ExciaOrchestrator`) |
-| **Tujuan** | Menerima curhatan pengguna, menentukan intent, mencari ayat/artikel relevan, lalu menghasilkan nasihat spiritual berbasis Al-Qur'an |
+EXCIA adalah aplikasi berbasis Python dan Streamlit yang menerima curhatan atau pertanyaan pengguna, mengklasifikasikan intent, mencari referensi yang relevan di Pinecone, lalu menghasilkan nasihat yang dibangun dari konteks Al-Qur'an dan artikel Islam. Aplikasi ini juga menerapkan validasi JSON schema untuk menjaga struktur output dari model Gemini.
 
-## ✨ Fitur Utama
+## Arsitektur saat ini
 
-- **Normalisasi Teks**: Normalisasi slang dan pre-processing teks Bahasa Indonesia
-- **Klasifikasi Intent**: Menggunakan model IndoBERT (`Exchonsive/excia-indobert-intent`) untuk memahami maksud pengguna
-- **Embedding Multilingual**: Embedding teks dengan `paraphrase-multilingual-MiniLM-L12-v2` (SentenceTransformers)
-- **Vector Search**: Penyimpanan dan pencarian vektor menggunakan Pinecone (index: `excia-index`)
-- **Generasi Nasihat**: Penyusunan nasihat kontekstual dengan Google Gemini (`gemini-3.5-flash`)
-- **UI Interaktif**: Chat interface dengan Streamlit, menampilkan ayat (teks Arab), terjemahan, tafsir, dan artikel pendukung
-- **In-Memory Caching**: Caching hasil untuk performa lebih baik
-- **JSON Schema Validation**: Enforced JSON response dari LLM untuk output yang terstruktur
+| Komponen | Detail |
+| --- | --- |
+| Frontend | Streamlit (`app.py`) |
+| Backend | `backend.py` dengan kelas `ExciaOrchestrator` |
+| Intent classifier | `Exchonsive/excia-indobert-intent` via `transformers` |
+| Embedding model | `paraphrase-multilingual-MiniLM-L12-v2` via `sentence-transformers` |
+| Vector DB | Pinecone index `excia-index` |
+| LLM | Google Gemini via `google.genai` |
+| Bahasa utama | Python |
 
-## 🏗️ Tech Stack
+## Fitur utama
 
-| Komponen | Teknologi |
-|----------|----------|
-| **Framework UI** | Streamlit 1.32.0 |
-| **Vector DB** | Pinecone 3.1.0 |
-| **Embeddings** | SentenceTransformers 2.5.1 |
-| **Intent Classification** | Transformers 4.38.2, IndoBERT |
-| **Deep Learning** | PyTorch 2.2.1 |
-| **LLM** | Google Generative AI (Gemini) |
+- Normalisasi teks Bahasa Indonesia untuk mengurangi variasi slang dan input user.
+- Prediksi intent secara lokal menggunakan IndoBERT.
+- Pencarian vektor untuk ayat Al-Qur'an dan artikel Islam.
+- Retrieval-Augmented Generation (RAG) dengan kandidat sumber yang dibatasi ke konteks yang ditemukan. 
+- Validasi respons model dengan JSON Schema.
+- Rate limiter, cache in-memory, dan fallback model Gemini untuk menangani overload atau quota limit.
+- UI chat yang menampilkan nasihat, referensi ayat, terjemahan, tafsir, dan artikel pendukung.
+- Verifikasi programatik agar ayat yang dipakai sesuai dengan kandidat yang ditemukan di database.
 
-## 📦 Dependensi
+## Struktur file
 
-Lihat `requirements.txt` untuk daftar lengkap semua dependensi:
-```
-streamlit==1.32.0
-pinecone-client==3.1.0
-sentence-transformers==2.5.1
-transformers==4.38.2
-torch==2.2.1
-google-generativeai==0.5.0
-python-dotenv==1.0.0
-requests>=2.31.0
-```
-
-## 📊 Struktur Proyek
-
-```
+```text
 .
-├── app.py              # Frontend Streamlit (UI Chat)
-├── backend.py          # Backend Orchestrator (Logic)
-├── requirements.txt    # Dependensi Python
-├── README.md           # Dokumentasi (file ini)
-├── LICENSE             # Lisensi proyek
-└── .env.example        # Template environment variables
+├── app.py             # Frontend Streamlit
+├── backend.py         # Orchestrator EXCIA, retrieval, validasi, dan pipeline utama
+├── requirements.txt   # Dependensi Python
+├── README.md          # Dokumentasi proyek
+├── LICENSE            # Lisensi proyek
+└── .gitignore
 ```
 
-## 🔧 Arsitektur & Alur Kerja
+## Dependensi
 
-**Alur Kerja:**
-1. Pengguna memasukkan pesan melalui antarmuka Streamlit (`app.py`)
-2. `ExciaOrchestrator` menormalisasi teks dan memprediksi intent menggunakan model IndoBERT
-3. Teks ditransformasi menjadi embedding menggunakan SentenceTransformers
-4. Embedding digunakan untuk mencari ayat dan artikel relevan di Pinecone
-5. Hasil pencarian diproses dan dikirim ke Google Gemini dengan JSON Schema untuk penyusunan nasihat
-6. Hasil (nasihat, metadata ayat, artikel) ditampilkan di UI dan di-cache di `st.session_state`
+Daftar dependensi yang benar saat ini ada di [requirements.txt](requirements.txt):
 
-## 🚀 Cara Menjalankan (Lokal)
+```txt
+# UI Framework
+streamlit
 
-### Prerequisites
-- Python 3.8 atau lebih tinggi
-- Pinecone API Key (gratis: https://www.pinecone.io/)
-- Google Gemini API Key (gratis: https://aistudio.google.com/app/apikey)
+# Vector Database
+pinecone
 
-### Setup Langkah demi Langkah
+# Embeddings & NLP
+sentence-transformers
+transformers
+torch
 
-**1. Clone repository dan masuk folder:**
+# LLM
+google-genai
+
+# Utilities
+python-dotenv
+requests
+huggingface-hub
+```
+
+## Variabel environment
+
+Sebelum menjalankan aplikasi, buat file `.env` di root project dengan variabel berikut:
+
+```bash
+PINECONE_API_KEY="your_pinecone_api_key"
+GEMINI_API_KEY="your_gemini_api_key"
+```
+
+Anda juga bisa menyetelnya langsung di terminal:
+
+```bash
+export PINECONE_API_KEY="your_pinecone_api_key"
+export GEMINI_API_KEY="your_gemini_api_key"
+```
+
+Catatan:
+- `backend.py` memeriksa keberadaan `PINECONE_API_KEY` dan `GEMINI_API_KEY` saat aplikasi diinisialisasi.
+- `GEMINI_API_KEY` bisa berupa string tunggal atau beberapa key yang dipisahkan koma untuk fallback otomatis.
+
+## Cara menjalankan
+
+### 1) Clone repo
+
 ```bash
 git clone https://github.com/Exchonsive/excia.git
 cd excia
 ```
 
-**2. Buat virtual environment Python (disarankan):**
+### 2) Buat virtual environment
+
 ```bash
 python -m venv .venv
-
-# Untuk Linux/macOS:
 source .venv/bin/activate
+```
 
-# Untuk Windows:
+Pada Windows:
+
+```bash
 .venv\Scripts\activate
 ```
 
-**3. Install dependencies:**
+### 3) Install dependensi
+
 ```bash
 pip install -r requirements.txt
 ```
 
-**4. Konfigurasi environment variables:**
+### 4) Jalankan aplikasi
 
-Buat file `.env` di root folder:
-```bash
-cat > .env << EOF
-PINECONE_API_KEY="your-pinecone-api-key-here"
-GEMINI_API_KEY="your-gemini-api-key-here"
-EOF
-```
-
-Atau set langsung di terminal:
-```bash
-export PINECONE_API_KEY="your-pinecone-api-key"
-export GEMINI_API_KEY="your-gemini-api-key"
-```
-
-**5. Jalankan aplikasi Streamlit:**
 ```bash
 streamlit run app.py
 ```
 
-Aplikasi akan terbuka di `http://localhost:8501`
+Aplikasi akan berjalan di browser pada URL lokal Streamlit biasanya:
 
-## 🛡️ Mitigasi Halusinasi & Keamanan Pemanggilan API
+```text
+http://localhost:8501
+```
 
-Saya telah menambahkan beberapa langkah di backend untuk mengurangi halusinasi LLM dan meningkatkan keamanan panggilan API:
+## Alur kerja aplikasi
 
-- **Retrieval-Augmented Generation (RAG)**: selalu sertakan hasil pencarian (ayat/artikel) sebagai konteks eksplisit ke LLM; hindari menjawab tanpa sumber.
-- **Enforce JSON Schema**: response LLM divalidasi terhadap JSON Schema; bila tidak valid sistem akan meminta re-generation atau menggunakan template jawaban konservatif.
-- **Source Attribution & Highlighting**: sertakan metadata sumber (surat/ayat/id artikel) dan confidence score; tampilkan potongan sumber di UI agar jawaban dapat dilacak.
-- **Output Filtering & Safety Layers**: filter profanity, tautan berbahaya, dan klaim medis/diagnostik; tandai respons yang memerlukan rujukan manusia.
-- **Verification Step (LLM as verifier)**: jalankan langkah verifikasi internal (model verifier atau heuristik) untuk mendeteksi probabilitas halusinasi.
-- **Conservative Generation**: gunakan pengaturan temperatur lebih rendah dan top_p lebih konservatif; tambahkan prompt constraints seperti "jawab hanya berdasarkan sumber yang tersedia".
-- **Rate Limiting & Backoff**: implementasi rate limiter, retries eksponensial, dan circuit-breaker pada panggilan eksternal (Gemini, Pinecone).
-- **Input Validation & Sanitization**: validasi schema input, batasi panjang konteks, dan normalisasi teks untuk mencegah injection atau prompt tampering.
-- **Logging & Monitoring**: log permintaan/responses dengan redaksi PII, kumpulkan telemetry untuk analisis kasus halusinasi, dan pasang alerting untuk pola anomali.
-- **Fallback & Human-in-the-loop**: jika confidence rendah atau mismatch sumber, fallback ke template aman dan kirim flag untuk review manusia.
+1. Pengguna mengirim pesan di Streamlit.
+2. `ExciaOrchestrator` melakukan normalisasi teks dan prediksi intent.
+3. Query di-encode menggunakan embedding model multilingual.
+4. Sistem mencari metadata ayat dan artikel yang relevan di Pinecone.
+5. Konteks hasil retrieval dikirim ke Gemini bersama prompt yang dibatasi oleh sumber.
+6. Model menghasilkan output JSON terstruktur berupa `is_relevant`, `nasihat`, `ayat_dipilih_index`, `confidence`, dan `alasan_confidence`.
+7. Backend melakukan validasi programatik untuk memastikan ayat yang dipakai sesuai dengan hasil retrieval.
+8. Hasil akhirnya ditampilkan di UI.
 
-Integrasi spesifik di `backend.py`:
-- `generate_with_sources()` — menyusun prompt RAG lengkap dengan metadata sumber.
-- `validate_llm_response()` — melakukan validasi JSON Schema dan filter keamanan sebelum mengembalikan hasil ke UI.
-- `retry_api_call()` — wrapper untuk pemanggilan eksternal dengan exponential backoff dan circuit-breaker.
-- `verifier_check()` — langkah verifikasi internal (panggilan model/verifier) untuk mengevaluasi faithfulness.
+## Implementasi keamanan dan kontrol kualitas
 
-Rekomendasi operasional:
-- Buat end-to-end tests yang mensimulasikan adversarial prompts dan edge cases.
-- Simpan sampel kasus halusinasi untuk analisis dan potensi fine-tuning model retrieval atau reranker.
-- Gunakan secrets manager dan batasi scope API key pada lingkungan production.
+Versi saat ini sudah menambahkan beberapa layer untuk menjaga kualitas output:
 
-## 📝 Catatan Pengembang
+- RAG-only prompt: model diarahkan hanya memakai kandidat sumber dari database.
+- JSON Schema enforcement: respons model harus sesuai format yang telah ditentukan.
+- Rate limiter dan backoff: mencegah overload API dan membatasi pemanggilan.
+- Cache in-memory: mengurangi panggilan berulang untuk prompt yang sama.
+- Fallback model Gemini: mencoba model alternatif jika terjadi 503 atau rate limit.
+- Verifikasi programatik: Python mengecek apakah ayat yang dipilih benar-benar sesuai dengan hasil retrieval.
 
-- Model intent classification di-load sekali pada inisialisasi `ExciaOrchestrator`
-- Cache in-memory di-reset setiap kali Streamlit rerun
-- JSON Schema di-enforce di level API untuk memastikan response terstruktur
-- PyTorch CUDA support opsional; code support CPU fallback
-- Model HF untuk intent: `Exchonsive/excia-indobert-intent`
-- LLM yang dipakai di `backend.py` adalah `gemini-3.5-flash` melalui `google.generativeai`
+## Catatan pengembang
 
-## 📄 License
+- Model intent ditampilkan dan dipakai via `AutoTokenizer` dan `AutoModelForSequenceClassification`.
+- Kelas utama memiliki fungsi `proses_curhatan()` untuk menjalankan satu siklus full pipeline.
+- Cache di-reset otomatis saat sesi Streamlit berjalan ulang.
+- Model yang dipakai untuk generation bisa berganti antara `gemini-3.1-flash-lite`, `gemini-2.5-flash-lite`, dan `gemini-2.5-flash` tergantung kondisi API.
 
-Proyek ini dilisensikan di bawah lisensi yang ditentukan di file [LICENSE](LICENSE).
+## Lisensi
 
-## 🤝 Contributing
+Proyek ini dilisensikan di bawah file [LICENSE](LICENSE).
 
-Kontribusi sangat diterima! Silakan buat pull request atau buka issue untuk saran dan perbaikan.
+## Kontribusi
 
-## 🔗 Links & Resources
+Kontribusi sangat terbuka. Silakan buat pull request atau ajukan issue jika ada saran, perbaikan, atau fitur yang ingin ditambahkan.
 
-Live: https://chatexcia.streamlit.app/
+## Sumber referensi
+
+- Streamlit: https://streamlit.io/
+- Pinecone: https://www.pinecone.io/
+- SentenceTransformers: https://www.sbert.net/
+- Google Generative AI: https://ai.google.dev/
+- Hugging Face: https://huggingface.co/
 
